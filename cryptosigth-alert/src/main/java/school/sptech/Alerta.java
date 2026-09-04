@@ -12,28 +12,45 @@ public class Alerta {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
         String dataFormatada = dataHora.format(formatter);
         Double porcentagem  = ((leitura - limite) * 100.0) / limite;
+        String indicador = "acima";
+        if(porcentagem < 0){
+            indicador = "abaixo";
+            porcentagem *= -1;
+        }
         System.out.println("""
-                Seu %s está %.2f%% fora do limite de %.2f
-                Leitura atual: %.2f%s
+                Seu %s está %.2f%% %s do limite de %.2f %s
+                Leitura atual: %.2f %s
                 Horário da Leitura: %s
-                """.formatted(nome, porcentagem, limite, leitura, unidade, dataFormatada));
+                """.formatted(nome, porcentagem, indicador, limite, unidade, leitura, unidade, dataFormatada));
     }
 
-    void validar(ArrayList<Integer> componentes, ArrayList<String> unidades, ArrayList<Double> limites, ArrayList<Double> leituras, ArrayList<String> nomesComp){
+    void validar(ArrayList<Integer> componentes, ArrayList<String> unidades, ArrayList<Double> limitesMax, ArrayList<Double> limitesMin, ArrayList<Double> leituras, ArrayList<String> nomesComp){
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < componentes.size(); i++) {
-            if(componentes.get(i) == 1){
+            if(componentes.get(i).equals(1)){
                 indices.add(i);
             }
         }
         for (int i = 0; i < indices.size(); i++) {
-            if (indices.get(i) == 6 || indices.get(i) == 7 || indices.get(i) == 9 || indices.get(i) == 10){
-                if(leituras.get(i) < limites.get(indices.get(i))){
-                    alertar(leituras.get(i), nomesComp.get(indices.get(i)), limites.get(indices.get(i)), unidades.get(indices.get(i)));
+            Double limiteMin = limitesMin.get(indices.get(i));
+            Double limiteMax = limitesMax.get(indices.get(i));
+            Double leitura = leituras.get(indices.get(i));
+            String nomeComp = nomesComp.get(indices.get(i));
+            String unidade = unidades.get(indices.get(i));
+
+            if (limiteMin == null) {
+                if( leitura > limiteMax){
+                    alertar(leitura, nomeComp, limiteMax, unidade);
+                }
+            } else if (limiteMax == null) {
+                if(leitura < limiteMin){
+                    alertar(leitura, nomeComp, limiteMin, unidade);
                 }
             } else {
-                if(leituras.get(i) >= limites.get(indices.get(i))){
-                    alertar(leituras.get(i), nomesComp.get(indices.get(i)), limites.get(indices.get(i)), unidades.get(indices.get(i)));
+                if(leitura < limiteMin){
+                    alertar(leitura, nomeComp, limiteMin, unidade);
+                } else if (leitura > limiteMax) {
+                    alertar(leitura, nomeComp, limiteMax, unidade);
                 }
             }
         }
